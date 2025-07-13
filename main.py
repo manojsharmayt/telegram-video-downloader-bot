@@ -24,6 +24,7 @@ def download_instagram_video(insta_url):
         video_url = result["medias"][0]["url"]
         return video_url
     except Exception as e:
+        print("Instagram download error:", e)
         return None
 
 @bot.message_handler(commands=['start'])
@@ -42,9 +43,15 @@ def handle_video(message):
         else:
             bot.reply_to(message, "❌ Failed to download Instagram video.")
     
-    elif "youtube.com" in url or "youtu.be" in url:
+    elif "youtube.com" in url or "youtu.be" in url or "shorts/" in url:
         try:
             bot.send_chat_action(message.chat.id, 'upload_video')
+
+            # Convert Shorts to standard YouTube link
+            if "shorts/" in url:
+                video_id = url.split("shorts/")[1].split("?")[0]
+                url = f"https://www.youtube.com/watch?v={video_id}"
+
             yt = YouTube(url)
             stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by("resolution").desc().first()
             filename = "ytvideo.mp4"
@@ -53,7 +60,9 @@ def handle_video(message):
                 bot.send_video(message.chat.id, f)
             os.remove(filename)
         except Exception as e:
+            print("YouTube download error:", e)
             bot.reply_to(message, f"❌ YouTube Error: {str(e)}")
+
     else:
         bot.reply_to(message, "❗ Send a valid YouTube or Instagram link.")
 
